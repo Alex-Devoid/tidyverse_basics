@@ -1,0 +1,210 @@
+---
+title: "tidyverse_basics"
+format: html
+author: "Alex Devoid" 
+date: "JUNE 3, 2024"
+purpose: "ST558-HW3"
+---
+
+## Task 1
+
+1.  If your working directory is `myfolder/homework/`, what relative path would you specify to get the file located at `myfolder/MyData.csv`?
+
+    ```         
+    To get the file located at myfolder/MyData.csv from the working directory myfolder/homework/, the relative path would be ../MyData.csv.
+    ```
+
+2.  What are the major benefits of using R projects?
+
+    ```         
+    Organization: Keeps all files related to a project in one place. 
+
+    Portability: Makes it easy to share projects with others, maintaining the same structure.
+
+    Consistency: Helps manage working directories and paths.  
+
+    Version Control: Integrates well with Git.
+    ```
+
+3.  What is git and what is github?
+
+    ```         
+    Git: Git is a version control system that allows multiple people to work on the same codebase. It tracks changes, manages versions, and helps in collaborative work. 
+
+    GitHub: GitHub is a web platform that uses Git for version control. It provides a UI for managing Git repositories,  issue tracking, and other features for software development.
+    ```
+
+4.  What are the two main differences between a tibble and a data.frame?
+
+    ```         
+    Printing: Tibbles have a more user-friendly print method. They show only the first 10 rows and as many columns as fit on the screen. 
+
+    Column Types: Tibbles are stricter about column types, not converting strings to factors by default. They also throw an error if column names are not valid.
+    ```
+
+5.  Rewrite the following nested function call using baseR's chaining operator:
+
+    ```         
+    library(tidyverse)
+
+    result <- as_tibble(iris) %>%
+      select(starts_with("Petal"), Species) %>%
+      filter(Petal.Length < 1.55) %>%
+      arrange(Species)
+    ```
+
+6.  What is meant by long format data and wide format data? Which do we generally prefer for statistical analysis?
+
+    ```         
+    Long Format Data: This format has one row per observation per variable. Each row is an observation, and columns include n variables. 
+
+    Wide Format Data: This format has one row per subject with each variable as a separate column.
+
+    Preference: Long format is generally preferred for statistical analysis. Many statistical librarier in R have functions that are designed to work with long format data.
+    ```
+
+## Task 2
+
+#### Glass data:
+
+```{r}
+
+library(tidyverse)
+
+# Read the data into R 
+glass_data_url <- "https://www4.stat.ncsu.edu/~online/datasets/glass.data"
+glass_col_names <- c("Id", "RI", "Na", "Mg", "Al", "Si", "K", "Ca", "Ba", "Fe", "Type_of_glass")
+
+glass_data <- read_csv(glass_data_url, col_names = FALSE) %>%
+  set_names(glass_col_names)
+
+# Print out the tibble
+glass_data
+
+# Process the Type_of_glass variable and filter observations
+glass_data_processed <- glass_data %>%
+  mutate(Type_of_glass = case_when(
+    Type_of_glass == 1 ~ "building_windows_float_processed",
+    Type_of_glass == 2 ~ "building_windows_non_float_processed",
+    Type_of_glass == 3 ~ "vehicle_windows_float_processed",
+    Type_of_glass == 4 ~ "vehicle_windows_non_float_processed",
+    Type_of_glass == 5 ~ "containers",
+    Type_of_glass == 6 ~ "tableware",
+    Type_of_glass == 7 ~ "headlamp",
+    TRUE ~ as.character(Type_of_glass)
+  )) %>%
+  filter(Fe < 0.2, Type_of_glass %in% c("tableware", "headlamp"))
+
+# Print out the processed tibble
+glass_data_processed
+```
+
+#### Yeast Data:
+
+```{r}
+library(tidyverse)
+
+# Read the data
+yeast_data_url <- "https://www4.stat.ncsu.edu/~online/datasets/yeast.data"
+yeast_col_names <- c("seq_name", "mcg", "gvh", "alm", "mit", "erl", "pox", "vac", "nuc", "class")
+
+yeast_data <- read_delim(yeast_data_url, delim = "  ", col_names = FALSE, trim_ws = TRUE) %>%
+  set_names(yeast_col_names)
+
+# Print out the tibble
+print(yeast_data)
+
+# Process the data by removing seq_name and nuc columns and adding mean and median columns for each class
+yeast_data_processed <- yeast_data %>%
+  select(-seq_name, -nuc) %>%
+  group_by(class) %>%
+  summarise(across(c(mcg:vac), list(mean = ~mean(.x, na.rm = TRUE), median = ~median(.x, na.rm = TRUE)), .names = "{.fn}_{col}"))
+
+# Print out the processed tibble
+print(yeast_data_processed)
+
+
+```
+
+## ** Task 2: Combining Excel and Delimited Data** 
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+# Step 1: Import the white wine data from the first sheet of the Excel file
+white_wine_path <- "./white-wine.xlsx"
+white_wine <- read_excel(white_wine_path, sheet = 1)
+
+# Print out the tibble
+print(white_wine)
+
+# Step 2: Import the variable names from the second sheet and rename the columns
+white_wine_colnames <- read_excel(white_wine_path, sheet = 2) %>% pull()
+colnames(white_wine) <- white_wine_colnames
+
+# Step 3: Add a column to indicate the wines are white
+white_wine <- white_wine %>%
+  mutate(type = "white")
+
+# Step 4: Import the red wine data from the CSV file with correct delimiter and column types
+red_wine_path <- "./red-wine.csv"
+red_wine <- read_delim(red_wine_path, delim = ";", col_types = cols(
+  `fixed acidity` = col_double(),
+  `volatile acidity` = col_double(),
+  `citric acid` = col_double(),
+  `residual sugar` = col_double(),
+  chlorides = col_double(),
+  `free sulfur dioxide` = col_double(),
+  `total sulfur dioxide` = col_double(),
+  density = col_double(),
+  pH = col_double(),
+  sulphates = col_double(),
+  alcohol = col_double(),
+  quality = col_integer()
+))
+
+# Replace the variable names as done above
+colnames(red_wine) <- white_wine_colnames
+
+# Add a column to indicate the wines are red
+red_wine <- red_wine %>%
+  mutate(type = "red")
+
+# Step 5: Combine the two data sets into one
+wine_data <- bind_rows(white_wine, red_wine)
+
+# Step 6: Filter the data to only look at high-quality wines and wines with a reasonable alcohol value
+high_quality_wine <- wine_data %>%
+  filter(quality > 6.5, alcohol < 132)
+
+# Step 7: Sort the data from highest quality to lowest
+sorted_wine <- high_quality_wine %>%
+  arrange(desc(quality))
+
+# Step 8: Select only the variables that contain acid, the alcohol variable, the type variable, and the quality variable
+selected_wine <- sorted_wine %>%
+  select(contains("acid"), alcohol, type, quality)
+
+# Step 9: Add the mean and standard deviation of the alcohol variable to the data set for each setting of the quality variable
+final_wine <- selected_wine %>%
+  group_by(quality) %>%
+  mutate(mean_alcohol = mean(alcohol, na.rm = TRUE),
+         sd_alcohol = sd(alcohol, na.rm = TRUE))
+
+# Print out the final tibble
+print(final_wine)
+
+
+
+
+```
+
+				
+
+			
+
+		
+
+	
+\
