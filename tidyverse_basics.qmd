@@ -6,7 +6,7 @@ date: "JUNE 3, 2024"
 purpose: "ST558-HW3"
 ---
 
-## Task 1
+## Task 1: Conceptual Questions
 
 1.  If your working directory is `myfolder/homework/`, what relative path would you specify to get the file located at `myfolder/MyData.csv`?
 
@@ -200,8 +200,78 @@ print(final_wine)
 
 ```
 
-				
+## Task 3: Database Practice 
 
+```{r}
+# Load necessary libraries
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+# Step 1: Connect to the database and list all tables
+con <- dbConnect(RSQLite::SQLite(), "lahman.db")
+dbListTables(con)
+
+# Step 2: Use tbl() function to return all data from the Teams table for the year 2015
+teams_2015 <- tbl(con, "Teams") %>%
+  filter(yearID == 2015) %>%
+  collect()
+
+# Print the result
+print(teams_2015)
+
+# Step 3: Use sql() function within tbl() to return all data from the Teams table for the year 2015
+teams_2015_sql <- tbl(con, sql("SELECT * FROM Teams WHERE yearID = 2015")) %>%
+  collect()
+
+# Print the result
+print(teams_2015_sql)
+
+# Step 4: Return all players in the HallOfFame, the year they were voted in, and their category
+hall_of_fame <- tbl(con, "HallOfFame") %>%
+  filter(inducted == "Y") %>%
+  select(playerID, yearID, category) %>%
+  collect()
+
+# Print the result
+print(hall_of_fame)
+
+# Step 5: Combine HallOfFame table with People table to add first and last names
+hall_of_fame_people <- hall_of_fame %>%
+  inner_join(tbl(con, "People") %>%
+               select(playerID, nameFirst, nameLast) %>%
+               collect(), by = "playerID")
+
+# Print the result
+print(hall_of_fame_people)
+
+# Step 6: Return playerID, G, W, and L columns from Managers table and compute win/loss records
+managers_wl <- tbl(con, "Managers") %>%
+  select(playerID, G, W, L) %>%
+  group_by(playerID) %>%
+  summarize(G_managed = sum(G, na.rm = TRUE),
+            Total_W = sum(W, na.rm = TRUE),
+            Total_L = sum(L, na.rm = TRUE)) %>%
+  collect() %>%
+  mutate(win_loss_pct = Total_W / G_managed) %>%
+  arrange(desc(win_loss_pct))
+
+# Print the result
+print(managers_wl)
+
+# Step 7: Return information for people who managed a team and were inducted into the Hall of Fame
+hall_of_fame_managers <- hall_of_fame_people %>%
+  inner_join(managers_wl, by = "playerID")
+
+# Print the result
+print(hall_of_fame_managers)
+
+# Disconnect from the database
+dbDisconnect(con)
+
+```
+
+## 
 			
 
 		
