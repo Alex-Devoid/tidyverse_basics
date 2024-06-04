@@ -1,5 +1,5 @@
 ---
-title: "tidyverse_basics"
+title: "Tidyverse Basics"
 format: html
 author: "Alex Devoid" 
 date: "JUNE 3, 2024"
@@ -11,13 +11,13 @@ purpose: "ST558-HW3"
 1.  If your working directory is `myfolder/homework/`, what relative path would you specify to get the file located at `myfolder/MyData.csv`?
 
     ```         
-    To get the file located at myfolder/MyData.csv from the working directory myfolder/homework/, the relative path would be ../MyData.csv.
+    The relative path would be ../MyData.csv.
     ```
 
 2.  What are the major benefits of using R projects?
 
     ```         
-    Organization: Keeps all files related to a project in one place. 
+    Organization: Keeps all project files in one place. 
 
     Portability: Makes it easy to share projects with others, maintaining the same structure.
 
@@ -63,7 +63,7 @@ purpose: "ST558-HW3"
     Preference: Long format is generally preferred for statistical analysis. Many statistical librarier in R have functions that are designed to work with long format data.
     ```
 
-## Task 2
+## Task 2: Combining Excel and Delimited Data
 
 #### Glass data:
 
