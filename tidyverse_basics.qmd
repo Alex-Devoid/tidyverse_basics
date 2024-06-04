@@ -132,7 +132,7 @@ print(yeast_data_processed)
 library(tidyverse)
 library(readxl)
 
-# Step 1: Import the white wine data from the first sheet of the Excel file
+# Step 1: Import the white wine data from the first sheet
 white_wine_path <- "./white-wine.xlsx"
 white_wine <- read_excel(white_wine_path, sheet = 1)
 
